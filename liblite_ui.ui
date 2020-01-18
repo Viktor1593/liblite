@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>872</width>
+    <width>862</width>
     <height>600</height>
    </rect>
   </property>
@@ -32,8 +32,8 @@
      <rect>
       <x>10</x>
       <y>40</y>
-      <width>471</width>
-      <height>511</height>
+      <width>841</width>
+      <height>321</height>
      </rect>
     </property>
     <property name="selectionBehavior">
@@ -46,8 +46,8 @@
    <widget class="QPushButton" name="cmd_edit_book">
     <property name="geometry">
      <rect>
-      <x>620</x>
-      <y>160</y>
+      <x>130</x>
+      <y>520</y>
       <width>111</width>
       <height>23</height>
      </rect>
@@ -59,8 +59,8 @@
    <widget class="QPushButton" name="cmd_delete_book">
     <property name="geometry">
      <rect>
-      <x>740</x>
-      <y>160</y>
+      <x>250</x>
+      <y>520</y>
       <width>111</width>
       <height>23</height>
      </rect>
@@ -72,8 +72,8 @@
    <widget class="QPushButton" name="cmd_add_book">
     <property name="geometry">
      <rect>
-      <x>500</x>
-      <y>160</y>
+      <x>10</x>
+      <y>520</y>
       <width>111</width>
       <height>23</height>
      </rect>
@@ -98,8 +98,8 @@
    <widget class="QComboBox" name="cmb_author">
     <property name="geometry">
      <rect>
-      <x>500</x>
-      <y>130</y>
+      <x>10</x>
+      <y>490</y>
       <width>351</width>
       <height>22</height>
      </rect>
@@ -111,8 +111,8 @@
    <widget class="QLineEdit" name="book_id">
     <property name="geometry">
      <rect>
-      <x>500</x>
-      <y>40</y>
+      <x>10</x>
+      <y>370</y>
       <width>351</width>
       <height>21</height>
      </rect>
@@ -124,8 +124,8 @@
    <widget class="QLineEdit" name="name">
     <property name="geometry">
      <rect>
-      <x>500</x>
-      <y>70</y>
+      <x>10</x>
+      <y>400</y>
       <width>351</width>
       <height>20</height>
      </rect>
@@ -134,8 +134,8 @@
    <widget class="QLineEdit" name="date">
     <property name="geometry">
      <rect>
-      <x>500</x>
-      <y>100</y>
+      <x>10</x>
+      <y>430</y>
       <width>351</width>
       <height>20</height>
      </rect>
@@ -151,13 +151,26 @@
      </rect>
     </property>
    </widget>
+   <widget class="QLineEdit" name="book_path">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>460</y>
+      <width>351</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="readOnly">
+     <bool>true</bool>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>872</width>
+     <width>862</width>
      <height>21</height>
     </rect>
    </property>

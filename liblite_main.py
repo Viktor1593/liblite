@@ -4,9 +4,10 @@ import sys
 import sqlite3
 import os.path
 import webbrowser
+import ntpath
+import shutil
 
-
-from PyQt5.QtWidgets import QMainWindow, QMessageBox, QApplication, QWidget, QAction, QTableWidget,QTableWidgetItem,QVBoxLayout
+from PyQt5.QtWidgets import QMainWindow, QMessageBox, QApplication, QWidget, QAction, QTableWidget, QTableWidgetItem, QVBoxLayout, QFileDialog
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import pyqtSlot
 
@@ -19,7 +20,7 @@ def get_books():
     global lib_con
     cur = lib_con.cursor()
     query = '''
-    SELECT b.book_id, b.name, a.author_id, a.name as author_name, a.patronym, a.surname
+    SELECT b.book_id, b.name, b.date, a.author_id, a.name as author_name, a.patronym, a.surname, b.main_path, b.enter_path
     FROM books b 
     LEFT JOIN b_athors_books ab 
         on b.book_id = ab.book_id
@@ -39,6 +40,7 @@ def get_book_info(book_id):
     else:
         return res[0]
 
+
 def add_book_info(book_info, author_info = {}, pub_info = {}):
     global lib_con
     cur = lib_con.cursor()
@@ -53,12 +55,18 @@ def edit_book_info(book_info):
     cur = lib_con.cursor()
     query = '''
         UPDATE books SET 
+        publisher_id = '{}',
         name = '{}',
-        date = '{}'
+        main_path = '{}',
+        enter_path = '{}',
+        date = '{}',
+        wiki_link = '{}',
+        description = '{}'
         WHERE book_id = {}
     '''
-    cur.execute(query.format(book_info['name'], book_info['date'], book_info['book_id']))
+    cur.execute(query.format(book_info['publisher_id'], book_info['name'], book_info['main_path'], book_info['enter_path'], book_info['date'], book_info['wiki_link'], book_info['description'], book_info['book_id']))
     lib_con.commit()
+    update_book_table()
     return None
 
 def delete_book(book_id):
@@ -67,6 +75,7 @@ def delete_book(book_id):
     query = 'DELETE FROM books WHERE book_id = {};'.format(book_id)
     cur.execute(query)
     lib_con.commit()
+    update_book_table() 
     return None
 
 def get_tables():
@@ -84,6 +93,13 @@ def select(table_name, key_dict = {}):
     query = 'SELECT * FROM {} {};'.format(table_name, condis_query)
     return [dict(row) for row in cur.execute(query).fetchall()]
 
+
+def update_book_table():
+    global ui
+    ui.lib_table.clear()
+    books_data = get_books()
+    fillTable(ui.lib_table, books_data)
+
 def fillTable(table, data: []):
     if len(data) == 0:
         return None
@@ -100,7 +116,6 @@ def fillTable(table, data: []):
             j+=1
         i+=1
     return None
-
 
 def showMain():
     global ui
@@ -124,20 +139,20 @@ def get_selected_info():
     global ui
     row = ui.lib_table.currentRow()
     cols = ui.lib_table.columnCount()
-    row_data = []
+    row_data = {}
     for col in range(cols):
-        row_data.append(ui.lib_table.item(row, col).text())
+        row_data[ui.lib_table.horizontalHeaderItem(col).text()] = ui.lib_table.item(row, col).text()
     print(row_data)
     return row_data
 
-def fill_book_form(book_id):
+
+def fill_book_form(book_info):
     global ui
-    book_info = get_book_info(book_id)
-    book_info2 = get_selected_info()
     ui.book_id.setText(str(book_info['book_id']))
     ui.name.setText(str(book_info['name']))
     ui.date.setText(str(book_info['date']))
-    i = ui.cmb_author.findData(book_info2[2])
+    ui.book_path.setText(build_path(book_info))
+    i = ui.cmb_author.findData(book_info['author_id'])
     if(i > -1) :
         ui.cmb_author.setCurrentIndex(i)
     else:
@@ -148,15 +163,20 @@ def get_book_form():
     global ui
     return {
         'book_id': ui.book_id.text(),
-        'name': ui.name.text(),
-        'date': ui.date.text()
+        'publisher_id': '', 
+        'name': ui.name.text(), 
+        'main_path': 'books', 
+        'enter_path': ntpath.basename(ui.book_path.text()), 
+        'date': ui.date.text(), 
+        'wiki_link': '', 
+        'description':  ''
     }
 
 
 def read_with_notepad(book_id):
     global script_path
     book_info = get_book_info(book_id)
-    webbrowser.open('/'.join([script_path, book_info['main_path'], book_info['enter_path']]))
+    webbrowser.open(build_path(book_info))
 
 def msgbox(text, buttons = QMessageBox.Ok, fun_ok = None, fun_cancel = None, msg_type = QMessageBox.Information, title = "Внимание!", add_info = None, detailed_info = None):
     msg = QMessageBox()
@@ -172,17 +192,17 @@ def msgbox(text, buttons = QMessageBox.Ok, fun_ok = None, fun_cancel = None, msg
 def setupMainUi(setupUi):
     def wrp(MainWindow):
         global ui
-        books_data = get_books()
         setupUi(MainWindow)
-        ui.lib_table.clicked.connect(lambda x: fill_book_form(get_selected_id()))
+        ui.lib_table.clicked.connect(lambda x: fill_book_form(get_selected_info()))
         ui.cmd_read_book.clicked.connect(lambda x: msgbox('В разработке'))
         ui.cmd_read_in_notepad.clicked.connect(lambda x: read_with_notepad(get_selected_id()))
 
-        ui.cmd_add_book.clicked.connect(lambda x: msgbox('В разработке'))
+        ui.cmd_add_book.clicked.connect(lambda x: show_add_book_dialog())
         # ui.cmd_edit_book.clicked.connect(lambda x: msgbox('В разработке'))
         ui.cmd_edit_book.clicked.connect(lambda x: edit_book_info(get_book_form()))
-        ui.cmd_delete_book.clicked.connect(lambda x: msgbox('В разработке'))
-        fillTable(ui.lib_table, books_data)
+        ui.cmd_delete_book.clicked.connect(lambda x: delete_book(get_selected_id()))
+        update_book_table()
+
         ui.authors = select("authors")
         for author in select("authors"):
             ui.cmb_author.addItem(author['name'] + ' ' + author['surname'], author['author_id'])
@@ -190,6 +210,40 @@ def setupMainUi(setupUi):
         # ui.cmb_author.currentData()
     return wrp
 
+def show_add_book_dialog():
+    file_name, _ = QFileDialog.getOpenFileName(None, 'Select book text file', '', 'Text Files (*.txt)' )
+    if file_name:
+        book_info = {
+            'book_id': '',
+            'publisher_id': '', 
+            'name': '', 
+            'main_path': 'books', 
+            'enter_path': ntpath.basename(file_name), 
+            'date': '', 
+            'wiki_link': '', 
+            'description':  '',
+            'author_id': ''
+        }
+        with open(file_name, 'r') as f:
+            for line in f:
+                if ':' in line:
+                    ar = line.split(':')
+                    key = ar[0].strip()
+                    if key == 'Author':
+                        pass
+                    elif key == 'Title':
+                        book_info['name'] = ':'.join(ar[1:]).strip()
+                        book_info['enter_path'] = book_info['name'] + '.txt'
+                    elif key == 'Release Date':
+                        book_info['date'] = ':'.join(ar[1:]).strip()
+        add_book(book_info['publisher_id'], book_info['name'], book_info['main_path'], \
+            book_info['enter_path'], book_info['date'], book_info['wiki_link'], book_info['description'])     
+        update_book_table()
+        shutil.copyfile(file_name, build_path(book_info))   
+        fill_book_form(book_info)
+
+def build_path(book_info):
+    return '\\'.join([script_path, book_info['main_path'], book_info['enter_path']])
 
 def drop_tables(tables = None):
     global lib_con
@@ -250,6 +304,7 @@ def add_book(publisher_id, name, main_path, enter_path, date, wiki_link, descrip
     ('{}', '{}', '{}', '{}', '{}', '{}', '{}')
     '''
     cur.execute(query.format(publisher_id, name, main_path, enter_path, date, wiki_link, description))
+    lib_con.commit()
 
 def add_publisher(pub_name, link):
     global lib_con
