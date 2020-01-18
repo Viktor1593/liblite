@@ -6,6 +6,7 @@ import os.path
 import webbrowser
 import ntpath
 import shutil
+import itertools
 
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QApplication, QWidget, QAction, QTableWidget, QTableWidgetItem, QVBoxLayout, QFileDialog
 from PyQt5.QtGui import QIcon
@@ -75,7 +76,8 @@ def delete_book(book_id):
     query = 'DELETE FROM books WHERE book_id = {};'.format(book_id)
     cur.execute(query)
     lib_con.commit()
-    update_book_table() 
+    update_book_table()
+    clear_form()
     return None
 
 def get_tables():
@@ -89,16 +91,38 @@ def select(table_name, key_dict = {}):
     for key, val in key_dict.items():
         condis.append("{}='{}'".format(key, val))
     if len(condis) > 0:
-        condis_query = 'where {}'.format(' AND '.join(condis))
+        condis_query = 'where ({})'.format(') AND ('.join(condis))
     query = 'SELECT * FROM {} {};'.format(table_name, condis_query)
     return [dict(row) for row in cur.execute(query).fetchall()]
 
 
 def update_book_table():
-    global ui
+    # global ui
     ui.lib_table.clear()
-    books_data = get_books()
+    ui.lib_table.t_data = get_books()
+    books_data = filter_books_data(ui.lib_table.t_data)
     fillTable(ui.lib_table, books_data)
+
+
+def filter_table():
+    ui.lib_table.clear()
+    books_data = filter_books_data(ui.lib_table.t_data)
+    # print(books_data)
+    fillTable(ui.lib_table, books_data)
+
+def filter_books_data(books_data):
+    text = ui.book_search.text().lower()
+    if len(text) == 0:
+        return books_data
+    return list(filter(lambda x: find_in_row(x, text), books_data))
+
+def find_in_row(row, text):
+    print(row)
+    for _, val in row.items():
+        if str(val).lower().find(text) != -1:
+            return True
+    return False
+
 
 def fillTable(table, data: []):
     if len(data) == 0:
@@ -159,6 +183,14 @@ def fill_book_form(book_info):
         ui.cmb_author.setCurrentIndex(-1)
 
 
+def clear_form():
+    ui.book_id.setText('')
+    ui.name.setText('')
+    ui.date.setText('')
+    ui.book_path.setText('')
+    ui.cmb_author.setCurrentIndex(-1)
+
+
 def get_book_form():
     global ui
     return {
@@ -178,9 +210,10 @@ def read_with_notepad(book_id):
     book_info = get_book_info(book_id)
     webbrowser.open(build_path(book_info))
 
+
 def msgbox(text, buttons = QMessageBox.Ok, fun_ok = None, fun_cancel = None, msg_type = QMessageBox.Information, title = "Внимание!", add_info = None, detailed_info = None):
     msg = QMessageBox()
-    msg.setIcon(msg_type) #QMessageBox.Information
+    msg.setIcon(msg_type)
     msg.setText(text)
     msg.setWindowTitle(title)
     if add_info is not None:
@@ -189,15 +222,19 @@ def msgbox(text, buttons = QMessageBox.Ok, fun_ok = None, fun_cancel = None, msg
         msg.setDetailedText(detailed_info)
     return msg.exec_()
 
+
 def setupMainUi(setupUi):
     def wrp(MainWindow):
-        global ui
+        # global ui
         setupUi(MainWindow)
+
+        ui.book_search.textChanged.connect(filter_table)
         ui.lib_table.clicked.connect(lambda x: fill_book_form(get_selected_info()))
+
         ui.cmd_read_book.clicked.connect(lambda x: msgbox('В разработке'))
         ui.cmd_read_in_notepad.clicked.connect(lambda x: read_with_notepad(get_selected_id()))
 
-        ui.cmd_add_book.clicked.connect(lambda x: show_add_book_dialog())
+        ui.cmd_add_book.clicked.connect(show_add_book_dialog)
         # ui.cmd_edit_book.clicked.connect(lambda x: msgbox('В разработке'))
         ui.cmd_edit_book.clicked.connect(lambda x: edit_book_info(get_book_form()))
         ui.cmd_delete_book.clicked.connect(lambda x: delete_book(get_selected_id()))
@@ -225,17 +262,20 @@ def show_add_book_dialog():
             'author_id': ''
         }
         with open(file_name, 'r') as f:
-            for line in f:
-                if ':' in line:
-                    ar = line.split(':')
-                    key = ar[0].strip()
-                    if key == 'Author':
-                        pass
-                    elif key == 'Title':
-                        book_info['name'] = ':'.join(ar[1:]).strip()
-                        book_info['enter_path'] = book_info['name'] + '.txt'
-                    elif key == 'Release Date':
-                        book_info['date'] = ':'.join(ar[1:]).strip()
+            try:
+                for line in f:
+                    if ':' in line:
+                        ar = line.split(':')
+                        key = ar[0].strip()
+                        if key == 'Author':
+                            pass
+                        elif key == 'Title':
+                            book_info['name'] = ':'.join(ar[1:]).strip()
+                            book_info['enter_path'] = book_info['name'] + '.txt'
+                        elif key == 'Release Date':
+                            book_info['date'] = ':'.join(ar[1:]).strip()
+            except Exception:
+                pass
         add_book(book_info['publisher_id'], book_info['name'], book_info['main_path'], \
             book_info['enter_path'], book_info['date'], book_info['wiki_link'], book_info['description'])     
         update_book_table()
