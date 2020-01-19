@@ -19,13 +19,25 @@ class book_reader(read_book_ui.Ui_read_book):
     def test(self):
         pass
 
+    
     def show_page(self, page_num):
         # return None
-        print(page_num)
+
+        page_num = self.correct_page(page_num)
         first_line = (page_num - 1) * self.book_linecount
         last_line = page_num * self.book_linecount
         self.page.setText("\n".join(self.book_lines[first_line:last_line]))
         self.page_num.setText(str(page_num))
+    
+    def correct_page(self, page_num):
+        if page_num < 1:
+            page_num = abs(page_num)
+            page_num = page_num % self.book_pagecount
+            page_num = self.book_pagecount - page_num
+        elif page_num > self.book_pagecount:
+            page_num = page_num % self.book_pagecount
+        return page_num
+
 
     def show_prev(self):
         c_page = int(self.page_num.text())
@@ -39,7 +51,7 @@ class book_reader(read_book_ui.Ui_read_book):
     def get_stat(self, book_lines):
         l_count = len(book_lines)
         data = {
-            'pages': l_count // self.book_linecount,
+            'pages': self.book_pagecount,
             'lines': l_count,
             'words': 0
         }
@@ -68,7 +80,7 @@ class book_reader(read_book_ui.Ui_read_book):
         words = {k: v for k, v in sorted(words.items(), key=lambda item: item[1], reverse = True)}
         top_popular = {}
         i = 0
-        for key, val in words.items():
+        for key, _ in words.items():
             top_popular[key] = words[key]
             i+= 1
             if i > 10:
@@ -78,16 +90,62 @@ class book_reader(read_book_ui.Ui_read_book):
         self.book_stat.setText(json.dumps(data, indent=4))
 
 
+    def search_text(self):
+        text = self.search_in_book.text()
+        self.search_res.clear()
+        if len(text) < 3:
+            return
+        if self.is_regular.isChecked():
+            try:
+                text = re.compile(text)
+            except Exception:
+                return
+        else:
+             text = text.lower()
+        self.found = []
+        for i, item in enumerate(self.book_lines):
+            if self.line_match(item, text):
+                self.found.append((i, item))
+                self.search_res.addItem(item)
+        print(self.found)
+        
+    def line_match(self, line, text):
+        if self.is_regular.isChecked():
+            return re.search(text, line)
+        else:
+            return line.lower().find(text) != -1
+
+    def search_res_onclick(self):
+        text = self.search_res.currentItem().text()
+        items = list(filter(lambda x: x[1] == text, self.found))
+        print(items)
+        if len(items) > 0:
+            self.show_page_by_line(items[0][0])
+
+    def show_page_by_line(self, line_index):
+        page = line_index // self.book_linecount
+        if line_index % self.book_linecount > 0:
+            page+=1
+        self.show_page(page)
+
+
+
+
 
 def show_reader(book_info, book_path):
 
     MainWindow = QMainWindow()
+
     reader = book_reader()
     reader.setupUi(MainWindow)
+
+    MainWindow.setWindowTitle(book_info['name'])
+
+    reader.search_in_book.textChanged.connect(lambda x: reader.search_text())
+    reader.search_res.clicked.connect(lambda x: reader.search_res_onclick())
     
     reader.go_prev_page.clicked.connect(lambda x: reader.show_prev())
     reader.go_next_page.clicked.connect(lambda x: reader.show_next())
-
 
     reader.book_info = book_info
     reader.book_path = book_path
@@ -95,6 +153,9 @@ def show_reader(book_info, book_path):
     with open(book_path, 'r', encoding = 'utf-8') as f:
         reader.book_lines = f.readlines()
     
+    reader.book_pagecount =  len(reader.book_lines) // reader.book_linecount
+    if len(reader.book_lines) % reader.book_linecount > 0:
+        reader.book_pagecount += 1
     reader.show_page(1)
     reader.get_stat(reader.book_lines)
     MainWindow.show()

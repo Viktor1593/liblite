@@ -164,6 +164,8 @@ def get_selected_id():
 def get_selected_info():
     # global ui
     row = ui.lib_table.currentRow()
+    if row == -1:
+        return None
     cols = ui.lib_table.columnCount()
     row_data = {}
     for col in range(cols):
@@ -174,6 +176,9 @@ def get_selected_info():
 
 def fill_book_form(book_info):
     # global ui
+    if book_info is None:
+        clear_form()
+        return
     ui.book_id.setText(str(book_info['book_id']))
     ui.name.setText(str(book_info['name']))
     ui.date.setText(str(book_info['date']))
@@ -207,13 +212,15 @@ def get_book_form():
     }
 
 
-def read_with_notepad(book_id):
-    global script_path
-    book_info = get_book_info(book_id)
+def read_with_notepad(book_info):
+    if book_info is None:
+        return
     webbrowser.open(build_path(book_info))
 
 
 def read_book(book_info):
+    if book_info is None:
+        return
     book_path = build_path(book_info)
     reader = lib_read.show_reader(book_info, book_path)
     ui.book_readers.append(reader)
@@ -232,7 +239,7 @@ def setupMainUi(setupUi):
         ui.lib_table.clicked.connect(lambda x: fill_book_form(get_selected_info()))
 
         ui.cmd_read_book.clicked.connect(lambda x: read_book(get_selected_info()))
-        ui.cmd_read_in_notepad.clicked.connect(lambda x: read_with_notepad(get_selected_id()))
+        ui.cmd_read_in_notepad.clicked.connect(lambda x: read_with_notepad(get_selected_info()))
 
         ui.cmd_add_book.clicked.connect(show_add_book_dialog)
         ui.cmd_edit_book.clicked.connect(lambda x: edit_book_info(get_book_form()))

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>791</width>
+    <width>890</width>
     <height>662</height>
    </rect>
   </property>
@@ -20,7 +20,7 @@
       <x>20</x>
       <y>20</y>
       <width>421</width>
-      <height>541</height>
+      <height>551</height>
      </rect>
     </property>
     <property name="readOnly">
@@ -66,8 +66,8 @@
    <widget class="QLabel" name="lbl_stat">
     <property name="geometry">
      <rect>
-      <x>500</x>
-      <y>20</y>
+      <x>470</x>
+      <y>330</y>
       <width>191</width>
       <height>21</height>
      </rect>
@@ -79,8 +79,8 @@
    <widget class="QTextEdit" name="book_stat">
     <property name="geometry">
      <rect>
-      <x>490</x>
-      <y>40</y>
+      <x>460</x>
+      <y>350</y>
       <width>251</width>
       <height>261</height>
      </rect>
@@ -89,13 +89,46 @@
      <bool>true</bool>
     </property>
    </widget>
+   <widget class="QListWidget" name="search_res">
+    <property name="geometry">
+     <rect>
+      <x>460</x>
+      <y>60</y>
+      <width>421</width>
+      <height>261</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="search_in_book">
+    <property name="geometry">
+     <rect>
+      <x>460</x>
+      <y>20</y>
+      <width>201</width>
+      <height>20</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="is_regular">
+    <property name="geometry">
+     <rect>
+      <x>670</x>
+      <y>20</y>
+      <width>91</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Рег. выр-е</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>791</width>
+     <width>890</width>
      <height>21</height>
     </rect>
    </property>
