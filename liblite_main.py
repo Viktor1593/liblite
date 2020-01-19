@@ -13,6 +13,8 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import pyqtSlot
 
 import liblite_ui
+import lib_read
+from msgbox import msgbox
 
 script_path = (os.path.dirname(os.path.realpath(__file__)))
 ui = None
@@ -144,7 +146,7 @@ def fillTable(table, data: []):
 def showMain():
     global ui
     app = liblite_ui.QtWidgets.QApplication(sys.argv)
-    MainWindow = liblite_ui.QtWidgets.QMainWindow()
+    MainWindow = QMainWindow()
     ui = liblite_ui.Ui_MainWindow()
     ui.setupUi = setupMainUi(ui.setupUi)
     ui.setupUi(MainWindow)
@@ -153,14 +155,14 @@ def showMain():
 
 
 def get_selected_id():
-    global ui
+    # global ui
     row = ui.lib_table.currentRow()
     if row > -1:
         return ui.lib_table.item(row, 0).text()
     return None
     
 def get_selected_info():
-    global ui
+    # global ui
     row = ui.lib_table.currentRow()
     cols = ui.lib_table.columnCount()
     row_data = {}
@@ -171,7 +173,7 @@ def get_selected_info():
 
 
 def fill_book_form(book_info):
-    global ui
+    # global ui
     ui.book_id.setText(str(book_info['book_id']))
     ui.name.setText(str(book_info['name']))
     ui.date.setText(str(book_info['date']))
@@ -211,16 +213,12 @@ def read_with_notepad(book_id):
     webbrowser.open(build_path(book_info))
 
 
-def msgbox(text, buttons = QMessageBox.Ok, fun_ok = None, fun_cancel = None, msg_type = QMessageBox.Information, title = "Внимание!", add_info = None, detailed_info = None):
-    msg = QMessageBox()
-    msg.setIcon(msg_type)
-    msg.setText(text)
-    msg.setWindowTitle(title)
-    if add_info is not None:
-        msg.setInformativeText(add_info)
-    if detailed_info is not None:
-        msg.setDetailedText(detailed_info)
-    return msg.exec_()
+def read_book(book_info):
+    book_path = build_path(book_info)
+    reader = lib_read.show_reader(book_info, book_path)
+    ui.book_readers.append(reader)
+
+
 
 
 def setupMainUi(setupUi):
@@ -228,14 +226,15 @@ def setupMainUi(setupUi):
         # global ui
         setupUi(MainWindow)
 
+        # ui.cmd_edit_book.clicked.connect(lambda x: msgbox('В разработке'))
+
         ui.book_search.textChanged.connect(filter_table)
         ui.lib_table.clicked.connect(lambda x: fill_book_form(get_selected_info()))
 
-        ui.cmd_read_book.clicked.connect(lambda x: msgbox('В разработке'))
+        ui.cmd_read_book.clicked.connect(lambda x: read_book(get_selected_info()))
         ui.cmd_read_in_notepad.clicked.connect(lambda x: read_with_notepad(get_selected_id()))
 
         ui.cmd_add_book.clicked.connect(show_add_book_dialog)
-        # ui.cmd_edit_book.clicked.connect(lambda x: msgbox('В разработке'))
         ui.cmd_edit_book.clicked.connect(lambda x: edit_book_info(get_book_form()))
         ui.cmd_delete_book.clicked.connect(lambda x: delete_book(get_selected_id()))
         update_book_table()
@@ -244,6 +243,8 @@ def setupMainUi(setupUi):
         for author in select("authors"):
             ui.cmb_author.addItem(author['name'] + ' ' + author['surname'], author['author_id'])
         ui.cmb_author.setCurrentIndex(-1)
+
+        ui.book_readers = list()
         # ui.cmb_author.currentData()
     return wrp
 
@@ -381,8 +382,7 @@ def add_books():
     authors = [
         (1, 'Robert Louis', '', 'Stevenson', ''),
         (2, 'Arthur Conan', '', 'Doyle', ''),
-        (3, 'Charles', '', 'Dickens', ''),
-
+        (3, 'Charles', '', 'Dickens', '')
     ]
     book_author_binds = [
         (1, 1), 
