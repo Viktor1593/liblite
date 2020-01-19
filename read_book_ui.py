@@ -17,7 +17,7 @@ class Ui_read_book(object):
         self.centralwidget = QtWidgets.QWidget(read_book)
         self.centralwidget.setObjectName("centralwidget")
         self.page = QtWidgets.QTextEdit(self.centralwidget)
-        self.page.setGeometry(QtCore.QRect(20, 20, 361, 541))
+        self.page.setGeometry(QtCore.QRect(20, 20, 421, 541))
         self.page.setReadOnly(True)
         self.page.setObjectName("page")
         self.page_num = QtWidgets.QLineEdit(self.centralwidget)

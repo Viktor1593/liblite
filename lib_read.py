@@ -49,7 +49,7 @@ def show_reader(book_info, book_path):
     reader.book_info = book_info
     reader.book_path = book_path
     reader.book_linecount = 20
-    with open(book_path, 'r') as f:
+    with open(book_path, 'r', encoding = 'utf-8') as f:
         reader.book_lines = f.readlines()
     
     reader.show_page(1)
