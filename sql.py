@@ -1,4 +1,7 @@
+"""
+module to connect sqlite with main info about books
 
+"""
 import os.path
 import sqlite3
 
@@ -7,7 +10,14 @@ lib_con = None
 
 
 
-def select(table_name, key_dict = {}):
+def select(table_name: str, key_dict: dict = {}) -> list:
+    '''
+    select data from sqlite table with optional condis
+    
+    :param table_name: name of table in sql
+    :param key_dict: condis to filter
+	:return: query result as list  
+    '''
     cur = lib_con.cursor()
     condis_query = ''
     condis = []
@@ -20,6 +30,11 @@ def select(table_name, key_dict = {}):
 
     
 def get_books():
+    '''
+    select books data for main table
+    
+	:return: query result as list  
+    '''
     # global lib_con
     cur = lib_con.cursor()
     query = '''
@@ -33,7 +48,13 @@ def get_books():
     return [dict(row) for row in cur.execute(query).fetchall()]
 
 
-def get_book_info(book_id):
+def get_book_info(book_id) -> any:
+    '''
+    select main book info by id
+    
+    :param book_id: id of book to select
+	:return: book_info on Nothing if not found
+    '''
     print(book_id)
     if book_id is None:
         return
@@ -44,7 +65,15 @@ def get_book_info(book_id):
         return res[0]
 
         
-def add_book_info(book_info, author_info = {}, pub_info = {}):
+def add_book_info(book_info: dict, author_info: dict = {}, pub_info: dict = {}) -> None:
+    '''
+    add book info to sql
+    
+    :param book_info: book info to insert
+    :param author_info: author info to insert
+    :param pub_info: publisher info to insert
+	:return: Nothing
+    '''
     cur = lib_con.cursor()
     book_info.keys()
     query = 'INSERT INTO books ({}) VALUES ({});'.format(book_info.keys().join(', '), book_info.join(', '))
@@ -53,7 +82,13 @@ def add_book_info(book_info, author_info = {}, pub_info = {}):
     return None
 
 
-def edit_book_info(book_info):
+def edit_book_info(book_info: dict) -> None:
+    '''
+    add book info to sql
+    
+    :param book_info: book info to update
+	:return: Nothing
+    '''
     cur = lib_con.cursor()
     query = '''
         UPDATE books SET 
@@ -71,7 +106,13 @@ def edit_book_info(book_info):
     return None
 
 
-def delete_book(book_id):
+def delete_book(book_id: int) -> None:
+    '''
+    delete book info from sql
+    
+    :param book_id: book info to update
+	:return: Nothing
+    '''
     cur = lib_con.cursor()
     query = 'DELETE FROM books WHERE book_id = {};'.format(book_id)
     cur.execute(query)
@@ -79,7 +120,13 @@ def delete_book(book_id):
     return None
 
 
-def drop_tables(tables = None):
+def drop_tables(tables: list = None) -> None:
+    '''
+    delete book info from sql
+    
+    :param book_id: optional list of table
+	:return: Nothing
+    '''
     if tables is None:
         tables = [
             'authors',
@@ -92,8 +139,14 @@ def drop_tables(tables = None):
     for table in tables:
         cur.execute(drop_query.format(table))
     lib_con.commit()
+    return None
 
-def create_tables():
+def create_tables() -> None:
+    '''
+    create main table in sqlite
+
+	:return: Nothing
+    '''
     cur = lib_con.cursor()
     cur.execute('''
     CREATE TABLE IF NOT EXISTS authors
@@ -114,10 +167,20 @@ def create_tables():
     lib_con.commit()
     return None
 
-def get_tables():
+def get_tables() -> list:
+    '''
+    get info about sql tables
+    
+	:return: list of table infos
+    '''
     return select('sqlite_master', {'type': 'table'})
 
-def add_books():
+def add_books() -> None:
+    '''
+    add base book infos
+
+	:return: Nothing
+    '''
     cur = lib_con.cursor()
     books = [
         (1, '', 'The Strange Case Of Dr. Jekyll And Mr. Hyde', 'books', 'The Strange Case Of Dr. Jekyll And Mr. Hyde.txt', 'June 25, 2008', '', ''),
@@ -144,7 +207,16 @@ def add_books():
     return None
 
 
-def add_author(name, patronym, surname, wiki_link):
+def add_author(name: str, patronym: str, surname: str, wiki_link: str) -> None:
+    '''
+    add author
+    
+    :param name: author name
+    :param patronym: author patronym
+    :param surname: author surname
+    :param wiki_link: author wiki_link
+	:return: Nothing
+    '''
     cur = lib_con.cursor()
     query = '''
     INSERT INTO authors 
@@ -153,8 +225,21 @@ def add_author(name, patronym, surname, wiki_link):
     ('{}', '{}', '{}', '{}')
     '''
     cur.execute(query.format(name, patronym, surname, wiki_link))
+    return None
 
-def add_book(publisher_id, name, main_path, enter_path, date, wiki_link, description):
+def add_book(publisher_id: str, name: str, main_path: str, enter_path: str, date: str, wiki_link: str, description: str) -> None:
+    '''
+    add book
+    
+    :param publisher_id: book publisher_id
+    :param name: book name
+    :param main_path: book main_path
+    :param enter_path: book enter_path
+    :param date: book date
+    :param wiki_link: book wiki_link
+    :param description: book description
+	:return: Nothing
+    '''
     cur = lib_con.cursor()
     query = '''
     INSERT INTO books 
@@ -164,8 +249,16 @@ def add_book(publisher_id, name, main_path, enter_path, date, wiki_link, descrip
     '''
     cur.execute(query.format(publisher_id, name, main_path, enter_path, date, wiki_link, description))
     lib_con.commit()
+    return None
 
-def add_publisher(pub_name, link):
+def add_publisher(pub_name: str, link: str) -> None:
+    '''
+    add publisher
+    
+    :param pub_name: publisher pub_name
+    :param link: publisher link
+	:return: Nothing
+    '''
     cur = lib_con.cursor()
     query = '''
     INSERT INTO publishers 
@@ -174,8 +267,16 @@ def add_publisher(pub_name, link):
     ('{}', '{}')
     '''
     cur.execute(query.format(pub_name, link))
+    return None
 
-def add_author_book_bind(book_id, author_id):
+def add_author_book_bind(book_id: int, author_id: int) -> None:
+    '''
+    add author book bind
+    
+    :param book_id: book_id
+    :param author_id: author_id
+	:return: Nothing
+    '''
     cur = lib_con.cursor()
     query = '''
     INSERT INTO publishers 
@@ -184,9 +285,15 @@ def add_author_book_bind(book_id, author_id):
     ('{}', '{}')
     '''
     cur.execute(query.format(book_id, author_id))
+    return None
 
 
 def connect():
+    '''
+    create sql connection
+    
+	:return: Nothing
+    '''
     global lib_con
     lib_con = sqlite3.connect("library.db")
     lib_con.row_factory = sqlite3.Row

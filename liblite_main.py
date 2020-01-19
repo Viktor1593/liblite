@@ -1,4 +1,6 @@
-
+'''
+    main module of liblite
+'''
 
 import sys
 import os.path
@@ -7,7 +9,6 @@ import ntpath
 import shutil
 import itertools
 
-# from PyQt5.QtWidgets import QMainWindow, QMessageBox, QApplication, QWidget, QAction, QTableWidget, QTableWidgetItem, QVBoxLayout, QFileDialog
 import PyQt5.QtWidgets as QW
 
 import liblite_ui
@@ -18,46 +19,93 @@ from msgbox import msgbox
 script_path = (os.path.dirname(os.path.realpath(__file__)))
 ui = None
 
-def edit_book_info(book_info):
+def edit_book_info(book_info: dict) -> None:
+    '''
+    edit book in sqlite and update table
+    
+    :param book_info: book params to edit
+	:return: Nothing    
+    '''
     sql.edit_book_info(book_info)
     update_book_table()
+    return None
 
 
-def delete_book(book_id):
+def delete_book(book_id: int) -> None:
+    '''
+    delete book in sqlite and update table
+    
+    :param book_id: id of book to delete
+	:return: Nothing    
+    '''
     sql.delete_book(book_id)
     update_book_table()
     clear_form()
+    return None
 
 
-def update_book_table():
+def update_book_table() -> None:
+    '''
+    update book in sqlite and update table
+    
+    :param book_info: book params to edit
+	:return: Nothing    
+    '''
     # global ui
     ui.lib_table.clear()
     ui.lib_table.t_data = sql.get_books()
     books_data = filter_books_data(ui.lib_table.t_data)
     fillTable(ui.lib_table, books_data)
+    return None
 
 
-def filter_table():
+def filter_table() -> None:
+    '''
+    filter table and update table
+    
+	:return: Nothing    
+    '''
     ui.lib_table.clear()
     books_data = filter_books_data(ui.lib_table.t_data)
     # print(books_data)
     fillTable(ui.lib_table, books_data)
+    return None
 
-def filter_books_data(books_data):
+def filter_books_data(books_data: list) -> list:
+    '''
+    tooks table data and apply filter on it
+    
+    :param books_data: list of book infos
+	:return: filtered books_data    
+    '''
     text = ui.book_search.text().lower()
     if len(text) == 0:
         return books_data
     return list(filter(lambda x: find_in_row(x, text), books_data))
 
-def find_in_row(row, text):
-    print(row)
-    for _, val in row.items():
+def find_in_row(book_info: dict, text: str) -> bool:
+    '''
+    search filter text in book info
+    
+    :param row: dict of book info
+    :param text: searching string
+	:return: True if found, False if not   
+    '''
+    print(book_info)
+    for _, val in book_info.items():
         if str(val).lower().find(text) != -1:
             return True
     return False
 
 
-def fillTable(table, data: []):
+def fillTable(table, data = []) -> None:
+    '''
+    fill table with data 
+    
+    :param table: table to be filled
+    :param data: data to fill table with
+	:return: Nothing 
+    '''
     if len(data) == 0:
         return None
     table.setColumnCount(len(data[0]))
@@ -76,13 +124,23 @@ def fillTable(table, data: []):
 
 
 
-def get_selected_id():
+def get_selected_id() -> any:
+    '''
+    get id from selected table row
+    
+	:return: book_id 
+    '''
     row = ui.lib_table.currentRow()
     if row > -1:
         return ui.lib_table.item(row, 0).text()
     return None
     
 def get_selected_info():
+    '''
+    get selected book_info
+    
+	:return: book_info 
+    '''
     row = ui.lib_table.currentRow()
     if row == -1:
         return None
@@ -94,10 +152,16 @@ def get_selected_info():
     return row_data
 
 
-def fill_book_form(book_info):
+def fill_book_form(book_info: dict) -> None:
+    '''
+    fill fields with book_info
+    
+    :param book_info: data to fill form with
+	:return: Nothing 
+    '''
     if book_info is None:
         clear_form()
-        return
+        return None
     ui.book_id.setText(str(book_info['book_id']))
     ui.name.setText(str(book_info['name']))
     ui.date.setText(str(book_info['date']))
@@ -107,17 +171,30 @@ def fill_book_form(book_info):
         ui.cmb_author.setCurrentIndex(i)
     else:
         ui.cmb_author.setCurrentIndex(-1)
+    return None
 
-
-def clear_form():
+def clear_form() -> None:
+    '''
+    fill fields with book_info
+    
+    :param table: table to be filled
+    :param data: data to fill table with
+	:return: Nothing 
+    '''
     ui.book_id.setText('')
     ui.name.setText('')
     ui.date.setText('')
     ui.book_path.setText('')
     ui.cmb_author.setCurrentIndex(-1)
+    return None
 
 
-def get_book_form():
+def get_book_form() -> dict:
+    '''
+    get data from form
+    
+	:return: book_info 
+    '''
     return {
         'book_id': ui.book_id.text(),
         'publisher_id': '', 
@@ -130,13 +207,25 @@ def get_book_form():
     }
 
 
-def read_with_notepad(book_info):
+def read_with_notepad(book_info: dict) -> None:
+    '''
+    open book in notepad
+    
+    :param book_info: book_info with file path data
+	:return: Nothing 
+    '''
     if book_info is None:
-        return
+        return None
     webbrowser.open(build_path(book_info))
 
 
-def read_book(book_info):
+def read_book(book_info: dict) -> None:
+    '''
+    open book in lib_read
+    
+    :param book_info: book_info with file path data
+	:return: Nothing 
+    '''
     if book_info is None:
         return
     book_path = build_path(book_info)
@@ -144,21 +233,31 @@ def read_book(book_info):
     ui.book_readers.append(reader)
 
 
-def showMain():
+def showMain() -> None:
+    '''
+    open main liblite window
+    
+	:return: Nothing 
+    '''
     global ui
     app = liblite_ui.QtWidgets.QApplication(sys.argv)
     MainWindow = liblite_ui.QtWidgets.QMainWindow()
     ui = liblite_ui.Ui_MainWindow()
-    ui.setupUi = setupMainUi(ui.setupUi)
+    ui.setupUi = setupMainUi(ui.setupUi) ## decorator for fun
     ui.setupUi(MainWindow)
     MainWindow.show()
     sys.exit(app.exec_())
+    return None
 
 def setupMainUi(setupUi):
+    '''
+    decorator for setup ui
+    
+    :param setupUi: setup function to decorate
+	:return: wraper 
+    '''
     def wrp(MainWindow):
         setupUi(MainWindow)
-
-        # ui.cmd_edit_book.clicked.connect(lambda x: msgbox('В разработке'))
 
         ui.book_search.textChanged.connect(filter_table)
         ui.lib_table.clicked.connect(lambda x: fill_book_form(get_selected_info()))
@@ -179,7 +278,13 @@ def setupMainUi(setupUi):
         # ui.cmb_author.currentData()
     return wrp
 
-def show_add_book_dialog():
+def show_add_book_dialog() -> any:
+    '''
+    display QFileDialog
+    take filepath, parse it for main fields and add to catalog
+    
+	:return: Nothing 
+    '''
     file_name, _ = QW.QFileDialog.getOpenFileName(None, 'Select book text file', '', 'Text Files (*.txt)' )
     if file_name:
         book_info = {
@@ -214,7 +319,13 @@ def show_add_book_dialog():
         shutil.copyfile(file_name, build_path(book_info))   
         fill_book_form(book_info)
 
-def build_path(book_info):
+def build_path(book_info: dict) -> str:
+    '''
+    build path to book file
+    
+    :param book_info: provider of book path info
+	:return: book file_path 
+    '''
     return '\\'.join([script_path, book_info['main_path'], book_info['enter_path']])
 
    

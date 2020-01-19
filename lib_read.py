@@ -4,7 +4,6 @@ import json
 import re
 
 from PyQt5 import QtGui, QtCore
-# from PyQt5.QtWidgets import QMainWindow, QMessageBox, QApplication, QWidget, QAction, QTableWidget, QTableWidgetItem, QVBoxLayout, QFileDialog
 import PyQt5.QtWidgets as QW
 
 import read_book_ui
