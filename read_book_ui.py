@@ -29,6 +29,13 @@ class Ui_read_book(object):
         self.go_prev_page = QtWidgets.QPushButton(self.centralwidget)
         self.go_prev_page.setGeometry(QtCore.QRect(110, 580, 31, 23))
         self.go_prev_page.setObjectName("go_prev_page")
+        self.lbl_stat = QtWidgets.QLabel(self.centralwidget)
+        self.lbl_stat.setGeometry(QtCore.QRect(500, 20, 191, 21))
+        self.lbl_stat.setObjectName("lbl_stat")
+        self.book_stat = QtWidgets.QTextEdit(self.centralwidget)
+        self.book_stat.setGeometry(QtCore.QRect(490, 40, 251, 201))
+        self.book_stat.setReadOnly(True)
+        self.book_stat.setObjectName("book_stat")
         read_book.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(read_book)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 791, 21))
@@ -46,6 +53,7 @@ class Ui_read_book(object):
         read_book.setWindowTitle(_translate("read_book", "MainWindow"))
         self.go_next_page.setText(_translate("read_book", ">"))
         self.go_prev_page.setText(_translate("read_book", "<"))
+        self.lbl_stat.setText(_translate("read_book", "Статистика"))
 
 
 if __name__ == "__main__":
