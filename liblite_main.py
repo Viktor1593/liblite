@@ -1,107 +1,38 @@
 
 
 import sys
-import sqlite3
 import os.path
 import webbrowser
 import ntpath
 import shutil
 import itertools
 
-from PyQt5.QtWidgets import QMainWindow, QMessageBox, QApplication, QWidget, QAction, QTableWidget, QTableWidgetItem, QVBoxLayout, QFileDialog
-from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import pyqtSlot
+# from PyQt5.QtWidgets import QMainWindow, QMessageBox, QApplication, QWidget, QAction, QTableWidget, QTableWidgetItem, QVBoxLayout, QFileDialog
+import PyQt5.QtWidgets as QW
 
 import liblite_ui
 import lib_read
+import sql
 from msgbox import msgbox
 
 script_path = (os.path.dirname(os.path.realpath(__file__)))
 ui = None
 
-def get_books():
-    global lib_con
-    cur = lib_con.cursor()
-    query = '''
-    SELECT b.book_id, b.name, b.date, a.author_id, a.name as author_name, a.patronym, a.surname, b.main_path, b.enter_path
-    FROM books b 
-    LEFT JOIN b_athors_books ab 
-        on b.book_id = ab.book_id
-    LEFT JOIN authors a 
-        on ab.author_id = a.author_id
-    '''
-    return [dict(row) for row in cur.execute(query).fetchall()]
-
-    
-def get_book_info(book_id):
-    print(book_id)
-    if book_id is None:
-        return
-    res = select('books', {'book_id': book_id})
-    if len(res) == 0:
-        return None
-    else:
-        return res[0]
-
-
-def add_book_info(book_info, author_info = {}, pub_info = {}):
-    global lib_con
-    cur = lib_con.cursor()
-    book_info.keys()
-    query = 'INSERT INTO books ({}) VALUES ({});'.format(book_info.keys().join(', '), book_info.join(', '))
-    cur.execute(query)
-    lib_con.commit()
-    return None
-
 def edit_book_info(book_info):
-    global lib_con
-    cur = lib_con.cursor()
-    query = '''
-        UPDATE books SET 
-        publisher_id = '{}',
-        name = '{}',
-        main_path = '{}',
-        enter_path = '{}',
-        date = '{}',
-        wiki_link = '{}',
-        description = '{}'
-        WHERE book_id = {}
-    '''
-    cur.execute(query.format(book_info['publisher_id'], book_info['name'], book_info['main_path'], book_info['enter_path'], book_info['date'], book_info['wiki_link'], book_info['description'], book_info['book_id']))
-    lib_con.commit()
+    sql.edit_book_info(book_info)
     update_book_table()
-    return None
+
 
 def delete_book(book_id):
-    global lib_con
-    cur = lib_con.cursor()
-    query = 'DELETE FROM books WHERE book_id = {};'.format(book_id)
-    cur.execute(query)
-    lib_con.commit()
+    sql.delete_book(book_id)
     update_book_table()
     clear_form()
-    return None
-
-def get_tables():
-    return select('sqlite_master', {'type': 'table'})
-
-def select(table_name, key_dict = {}):
-    global lib_con
-    cur = lib_con.cursor()
-    condis_query = ''
-    condis = []
-    for key, val in key_dict.items():
-        condis.append("{}='{}'".format(key, val))
-    if len(condis) > 0:
-        condis_query = 'where ({})'.format(') AND ('.join(condis))
-    query = 'SELECT * FROM {} {};'.format(table_name, condis_query)
-    return [dict(row) for row in cur.execute(query).fetchall()]
 
 
 def update_book_table():
     # global ui
     ui.lib_table.clear()
-    ui.lib_table.t_data = get_books()
+    ui.lib_table.t_data = sql.get_books()
     books_data = filter_books_data(ui.lib_table.t_data)
     fillTable(ui.lib_table, books_data)
 
@@ -138,31 +69,20 @@ def fillTable(table, data: []):
         for key, val in row.items():
             if i == 0:
                 table.horizontalHeaderItem(j).setToolTip(key)
-            table.setItem(i,j, QTableWidgetItem(str(val)))
+            table.setItem(i,j, QW.QTableWidgetItem(str(val)))
             j+=1
         i+=1
     return None
 
-def showMain():
-    global ui
-    app = liblite_ui.QtWidgets.QApplication(sys.argv)
-    MainWindow = QMainWindow()
-    ui = liblite_ui.Ui_MainWindow()
-    ui.setupUi = setupMainUi(ui.setupUi)
-    ui.setupUi(MainWindow)
-    MainWindow.show()
-    sys.exit(app.exec_())
 
 
 def get_selected_id():
-    # global ui
     row = ui.lib_table.currentRow()
     if row > -1:
         return ui.lib_table.item(row, 0).text()
     return None
     
 def get_selected_info():
-    # global ui
     row = ui.lib_table.currentRow()
     if row == -1:
         return None
@@ -175,7 +95,6 @@ def get_selected_info():
 
 
 def fill_book_form(book_info):
-    # global ui
     if book_info is None:
         clear_form()
         return
@@ -199,7 +118,6 @@ def clear_form():
 
 
 def get_book_form():
-    global ui
     return {
         'book_id': ui.book_id.text(),
         'publisher_id': '', 
@@ -226,11 +144,18 @@ def read_book(book_info):
     ui.book_readers.append(reader)
 
 
-
+def showMain():
+    global ui
+    app = liblite_ui.QtWidgets.QApplication(sys.argv)
+    MainWindow = liblite_ui.QtWidgets.QMainWindow()
+    ui = liblite_ui.Ui_MainWindow()
+    ui.setupUi = setupMainUi(ui.setupUi)
+    ui.setupUi(MainWindow)
+    MainWindow.show()
+    sys.exit(app.exec_())
 
 def setupMainUi(setupUi):
     def wrp(MainWindow):
-        # global ui
         setupUi(MainWindow)
 
         # ui.cmd_edit_book.clicked.connect(lambda x: msgbox('В разработке'))
@@ -246,8 +171,7 @@ def setupMainUi(setupUi):
         ui.cmd_delete_book.clicked.connect(lambda x: delete_book(get_selected_id()))
         update_book_table()
 
-        ui.authors = select("authors")
-        for author in select("authors"):
+        for author in sql.select("authors"):
             ui.cmb_author.addItem(author['name'] + ' ' + author['surname'], author['author_id'])
         ui.cmb_author.setCurrentIndex(-1)
 
@@ -256,7 +180,7 @@ def setupMainUi(setupUi):
     return wrp
 
 def show_add_book_dialog():
-    file_name, _ = QFileDialog.getOpenFileName(None, 'Select book text file', '', 'Text Files (*.txt)' )
+    file_name, _ = QW.QFileDialog.getOpenFileName(None, 'Select book text file', '', 'Text Files (*.txt)' )
     if file_name:
         book_info = {
             'book_id': '',
@@ -284,7 +208,7 @@ def show_add_book_dialog():
                             book_info['date'] = ':'.join(ar[1:]).strip()
             except Exception:
                 pass
-        add_book(book_info['publisher_id'], book_info['name'], book_info['main_path'], \
+        sql.add_book(book_info['publisher_id'], book_info['name'], book_info['main_path'], \
             book_info['enter_path'], book_info['date'], book_info['wiki_link'], book_info['description'])     
         update_book_table()
         shutil.copyfile(file_name, build_path(book_info))   
@@ -293,131 +217,8 @@ def show_add_book_dialog():
 def build_path(book_info):
     return '\\'.join([script_path, book_info['main_path'], book_info['enter_path']])
 
-def drop_tables(tables = None):
-    global lib_con
-    if tables is None:
-        tables = [
-            'authors',
-            'publishers',
-            'books',
-            'b_athors_books',
-        ]
-    drop_query  = 'DROP TABLE IF EXISTS {};'
-    cur = lib_con.cursor()
-    for table in tables:
-        cur.execute(drop_query.format(table))
-    lib_con.commit()
-
-def create_tables():
-    global lib_con
-    cur = lib_con.cursor()
-    cur.execute('''
-    CREATE TABLE IF NOT EXISTS authors
-    (author_id INTEGER PRIMARY KEY, name, patronym, surname, wiki_link);
-    ''')
-    cur.execute('''
-    CREATE TABLE IF NOT EXISTS publishers
-    (publisher_id INTEGER PRIMARY KEY, pub_name, link);
-    ''')
-    cur.execute('''
-    CREATE TABLE IF NOT EXISTS books
-    (book_id INTEGER PRIMARY KEY, publisher_id, name, main_path, enter_path, date, wiki_link, description);
-    ''')
-    cur.execute('''
-    CREATE TABLE IF NOT EXISTS b_athors_books 
-    (book_id INTEGER, author_id INTEGER);
-    ''')
-    lib_con.commit()
-    return None
- 
-
-def add_author(name, patronym, surname, wiki_link):
-    global lib_con
-    cur = lib_con.cursor()
-    query = '''
-    INSERT INTO authors 
-    (name, patronym, surname, wiki_link)
-    values
-    ('{}', '{}', '{}', '{}')
-    '''
-    cur.execute(query.format(name, patronym, surname, wiki_link))
-
-def add_book(publisher_id, name, main_path, enter_path, date, wiki_link, description):
-    global lib_con
-    cur = lib_con.cursor()
-    query = '''
-    INSERT INTO books 
-    (publisher_id, name, main_path, enter_path, date, wiki_link, description)
-    values
-    ('{}', '{}', '{}', '{}', '{}', '{}', '{}')
-    '''
-    cur.execute(query.format(publisher_id, name, main_path, enter_path, date, wiki_link, description))
-    lib_con.commit()
-
-def add_publisher(pub_name, link):
-    global lib_con
-    cur = lib_con.cursor()
-    query = '''
-    INSERT INTO publishers 
-    (pub_name, link)
-    values
-    ('{}', '{}')
-    '''
-    cur.execute(query.format(pub_name, link))
-
-def add_author_book_bind(book_id, author_id):
-    global lib_con
-    cur = lib_con.cursor()
-    query = '''
-    INSERT INTO publishers 
-    (book_id, author_id)
-    values
-    ('{}', '{}')
-    '''
-    cur.execute(query.format(book_id, author_id))
-
-def add_books():
-    global lib_con
-    cur = lib_con.cursor()
-    books = [
-        (1, '', 'The Strange Case Of Dr. Jekyll And Mr. Hyde', 'books', 'The Strange Case Of Dr. Jekyll And Mr. Hyde.txt', 'June 25, 2008', '', ''),
-        (2, '', 'The Adventures of Sherlock Holmes', 'books', 'The Adventures of Sherlock Holmes.txt', 'November 29, 2002', '', ''),
-        (3, '', 'A Christmas Carol A Ghost Story of Christmas', 'books', 'A Christmas Carol A Ghost Story of Christmas.txt', 'November 29, 2002', '', ''),
-        (4, '', 'David Copperfield', 'books', 'David Copperfield.txt', 'August 11, 2004', '', ''),
-        (5, '', 'Beowolf', 'books', 'Beowolf.txt', 'July 19, 2005', '', '')
-    ]
-    authors = [
-        (1, 'Robert Louis', '', 'Stevenson', ''),
-        (2, 'Arthur Conan', '', 'Doyle', ''),
-        (3, 'Charles', '', 'Dickens', '')
-    ]
-    book_author_binds = [
-        (1, 1), 
-        (2, 2), 
-        (3, 3), 
-        (4, 3)
-    ] 
-    cur.executemany("INSERT INTO books VALUES (?,?,?,?,?,?,?,?)", books)
-    cur.executemany("INSERT INTO authors VALUES (?,?,?,?,?)", authors)
-    cur.executemany("INSERT INTO b_athors_books VALUES (?,?)", book_author_binds)
-    lib_con.commit()
-    return None
-
-
    
 if __name__ == '__main__':
-    lib_con = sqlite3.connect("library.db")
-
-    # drop_tables()
-    # create_tables()
-    # add_books()
-
-    # print(select('books'))
-
-    lib_con = sqlite3.connect(script_path + "/library.db")
-    lib_con.row_factory = sqlite3.Row
-    # print(get_books())
-    # print(get_book_info(1))
-    # print(get_tables())
+    sql.connect()
     showMain()
-    lib_con.close()
+    sql.close()

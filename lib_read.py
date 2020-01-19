@@ -4,7 +4,8 @@ import json
 import re
 
 from PyQt5 import QtGui, QtCore
-from PyQt5.QtWidgets import QMainWindow, QMessageBox, QApplication, QWidget, QAction, QTableWidget, QTableWidgetItem, QVBoxLayout, QFileDialog
+# from PyQt5.QtWidgets import QMainWindow, QMessageBox, QApplication, QWidget, QAction, QTableWidget, QTableWidgetItem, QVBoxLayout, QFileDialog
+import PyQt5.QtWidgets as QW
 
 import read_book_ui
 from msgbox import msgbox
@@ -15,10 +16,6 @@ class book_reader(read_book_ui.Ui_read_book):
         
     # def __init__(self, parent=None):
     #     super(book_reader, self).__init__(parent)
-
-    def test(self):
-        pass
-
     
     def show_page(self, page_num):
         # return None
@@ -134,7 +131,7 @@ class book_reader(read_book_ui.Ui_read_book):
 
 def show_reader(book_info, book_path):
 
-    MainWindow = QMainWindow()
+    MainWindow = QW.QMainWindow()
 
     reader = book_reader()
     reader.setupUi(MainWindow)
